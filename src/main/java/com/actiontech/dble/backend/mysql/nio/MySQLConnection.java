@@ -365,6 +365,9 @@ public class MySQLConnection extends BackendAIOConnection {
         int synCount = schemaSyn + charsetSyn + txIsolationSyn + autoCommitSyn + xaSyn + setSqlFlag;
         if (synCount == 0) {
             // not need syn connection
+            if (session != null) {
+                session.setBackendRequestTime(this.id);
+            }
             sendQueryCmd(rrn.getStatement(), clientCharset);
             return;
         }
@@ -404,7 +407,9 @@ public class MySQLConnection extends BackendAIOConnection {
         // and our query sql to multi command at last
         sb.append(rrn.getStatement()).append(";");
         // syn and execute others
-        session.setBackendRequestTime(this.id);
+        if (session != null) {
+            session.setBackendRequestTime(this.id);
+        }
         this.sendQueryCmd(sb.toString(), clientCharset);
         // waiting syn result...
 

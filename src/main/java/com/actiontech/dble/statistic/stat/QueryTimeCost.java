@@ -11,7 +11,7 @@ import java.util.Map;
 public class QueryTimeCost {
     private long requestTime = 0;
     private long responseTime = 0;
-    private Map<Long, QueryTimeCost> backEndTimeCosts;
+    private volatile Map<Long, QueryTimeCost> backEndTimeCosts;
 
 
     public long getRequestTime() {
@@ -35,10 +35,6 @@ public class QueryTimeCost {
             backEndTimeCosts = new HashMap<>();
         }
         return backEndTimeCosts;
-    }
-
-    public void setBackEndTimeCosts(Map<Long, QueryTimeCost> backEndTimeCosts) {
-        this.backEndTimeCosts = backEndTimeCosts;
     }
 
 }
