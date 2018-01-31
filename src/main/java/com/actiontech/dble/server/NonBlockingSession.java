@@ -22,6 +22,8 @@ import com.actiontech.dble.backend.mysql.store.memalloc.MemSizeController;
 import com.actiontech.dble.backend.mysql.xa.TxState;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.config.ServerConfig;
+import com.actiontech.dble.jsdt.CostTimeProvider;
+import com.actiontech.dble.jsdt.CostTimeProviderFactory;
 import com.actiontech.dble.net.mysql.OkPacket;
 import com.actiontech.dble.plan.common.exception.MySQLOutPutException;
 import com.actiontech.dble.plan.node.PlanNode;
@@ -77,6 +79,7 @@ public class NonBlockingSession implements Session {
     private MemSizeController orderBufferMC;
     private MemSizeController otherBufferMC;
     private QueryTimeCost queryTimeCost;
+    private CostTimeProvider provider;
     private volatile boolean timeCost = false;
 
     public NonBlockingSession(ServerConnection source) {
@@ -109,6 +112,8 @@ public class NonBlockingSession implements Session {
             LOGGER.debug("clear");
         }
         queryTimeCost = new QueryTimeCost();
+        provider = CostTimeProviderFactory.getProvider();
+        provider.beginRequest();
         long requestTime = System.nanoTime();
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("frontend connection setRequestTime:" + requestTime);
@@ -124,7 +129,8 @@ public class NonBlockingSession implements Session {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("setResponseTime:" + responseTime);
         }
-        queryTimeCost.setResponseTime(System.nanoTime());
+        queryTimeCost.setResponseTime(responseTime);
+        provider.beginResponse();
         QueryTimeCostContainer.getInstance().add(queryTimeCost);
     }
 
