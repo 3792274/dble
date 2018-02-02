@@ -175,6 +175,12 @@ public class ServerConnection extends FrontendConnection {
         session.setRequestTime();
     }
 
+    @Override
+    public void endParseProtocol() {
+        session.endParseProtocol();
+    }
+
+
     public void executeTask() {
         for (Pair<SetHandler.KeyType, Pair<String, String>> task : contextTask) {
             switch (task.getKey()) {
@@ -324,6 +330,7 @@ public class ServerConnection extends FrontendConnection {
             executeException(e, sql);
             return;
         }
+        session.endRouter();
         session.execute(rrs);
     }
 

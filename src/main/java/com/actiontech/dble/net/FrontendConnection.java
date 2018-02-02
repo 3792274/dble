@@ -210,6 +210,8 @@ public abstract class FrontendConnection extends AbstractConnection {
 
     protected abstract void setRequestTime();
 
+    public abstract void endParseProtocol();
+
     public void initDB(byte[] data) {
 
         MySQLMessage mm = new MySQLMessage(data);
@@ -331,6 +333,7 @@ public abstract class FrontendConnection extends AbstractConnection {
             return;
         }
 
+        this.endParseProtocol();
         this.query(sql);
     }
 
@@ -469,6 +472,7 @@ public abstract class FrontendConnection extends AbstractConnection {
             return;
         }
         handler.handle(data);
+
     }
 
     protected int getServerCapabilities() {

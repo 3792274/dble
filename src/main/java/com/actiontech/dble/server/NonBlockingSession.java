@@ -20,10 +20,9 @@ import com.actiontech.dble.backend.mysql.nio.handler.transaction.xa.XACommitNode
 import com.actiontech.dble.backend.mysql.nio.handler.transaction.xa.XARollbackNodesHandler;
 import com.actiontech.dble.backend.mysql.store.memalloc.MemSizeController;
 import com.actiontech.dble.backend.mysql.xa.TxState;
+import com.actiontech.dble.btrace.provider.CostTimeProvider;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.config.ServerConfig;
-import com.actiontech.dble.jsdt.CostTimeProvider;
-import com.actiontech.dble.jsdt.CostTimeProviderFactory;
 import com.actiontech.dble.net.mysql.OkPacket;
 import com.actiontech.dble.plan.common.exception.MySQLOutPutException;
 import com.actiontech.dble.plan.node.PlanNode;
@@ -112,8 +111,8 @@ public class NonBlockingSession implements Session {
             LOGGER.debug("clear");
         }
         queryTimeCost = new QueryTimeCost();
-        provider = CostTimeProviderFactory.getProvider();
-        provider.beginRequest();
+        provider = new CostTimeProvider();
+        provider.beginRequest(source.getId());
         long requestTime = System.nanoTime();
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("frontend connection setRequestTime:" + requestTime);
@@ -121,6 +120,27 @@ public class NonBlockingSession implements Session {
         queryTimeCost.setRequestTime(requestTime);
     }
 
+    public void endParseProtocol() {
+        if (!timeCost) {
+            return;
+        }
+        provider.endParseProtocol(source.getId());
+    }
+
+    public void endParse() {
+        if (!timeCost) {
+            return;
+        }
+        provider.endParse(source.getId());
+    }
+
+
+    public void endRouter() {
+        if (!timeCost) {
+            return;
+        }
+        provider.endRouter(source.getId());
+    }
     public void setResponseTime() {
         if (!timeCost) {
             return;
@@ -130,7 +150,7 @@ public class NonBlockingSession implements Session {
             LOGGER.debug("setResponseTime:" + responseTime);
         }
         queryTimeCost.setResponseTime(responseTime);
-        provider.beginResponse();
+        provider.beginResponse(source.getId());
         QueryTimeCostContainer.getInstance().add(queryTimeCost);
     }
 
