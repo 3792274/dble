@@ -176,10 +176,9 @@ public class ServerConnection extends FrontendConnection {
     }
 
     @Override
-    public void endParseProtocol() {
-        session.endParseProtocol();
+    public void startProcess() {
+        session.startProcess();
     }
-
 
     public void executeTask() {
         for (Pair<SetHandler.KeyType, Pair<String, String>> task : contextTask) {
@@ -330,7 +329,7 @@ public class ServerConnection extends FrontendConnection {
             executeException(e, sql);
             return;
         }
-        session.endRouter();
+        session.endRoute();
         session.execute(rrs);
     }
 

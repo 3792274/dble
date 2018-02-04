@@ -27,24 +27,25 @@ public class BTraceCostTime {
             method = "beginRequest"
     )
     public static void beginRequest(@ProbeClassName String probeClass, @ProbeMethodName String probeMethod, long arg) {
+        Profiling.recordEntry(profiler, "request->1.startProcess");
+        Profiling.recordEntry(profiler, "request->2.endParse");
+        Profiling.recordEntry(profiler, "request->3.endRoute");
+//        Profiling.recordEntry(profiler, "request->4.resFromBack");
+        Profiling.recordEntry(profiler, "request->5.startExecuteBackend");
+        Profiling.recordEntry(profiler, "request->6.response");
         BTraceUtils.Collections.put(records, arg, timeNanos());
-        Profiling.recordEntry(profiler, "request->response");
-        Profiling.recordEntry(profiler, "request->endParseProtocol");
-        Profiling.recordEntry(profiler, "request->endParse");
-        Profiling.recordEntry(profiler, "request->endRouter");
     }
-
     @OnMethod(
             clazz = "com.actiontech.dble.btrace.provider.CostTimeProvider",
-            method = "endParseProtocol"
+            method = "startProcess"
     )
-    public static void endParseProtocol(@ProbeClassName String probeClass, @ProbeMethodName String probeMethod, long arg) {
+    public static void startProcess(@ProbeClassName String probeClass, @ProbeMethodName String probeMethod, long arg) {
         Long ts = BTraceUtils.Collections.get(records, arg);
         if (ts == null) {
             return;
         }
         long duration = timeNanos() - ts;
-        Profiling.recordExit(profiler, "request->endParseProtocol", duration);
+        Profiling.recordExit(profiler, "request->1.startProcess", duration);
     }
 
     @OnMethod(
@@ -57,20 +58,47 @@ public class BTraceCostTime {
             return;
         }
         long duration = timeNanos() - ts;
-        Profiling.recordExit(profiler, "request->endParse", duration);
+        Profiling.recordExit(profiler, "request->2.endParse", duration);
     }
 
     @OnMethod(
             clazz = "com.actiontech.dble.btrace.provider.CostTimeProvider",
-            method = "endRouter"
+            method = "endRoute"
     )
-    public static void endRouter(@ProbeClassName String probeClass, @ProbeMethodName String probeMethod, long arg) {
+    public static void endRoute(@ProbeClassName String probeClass, @ProbeMethodName String probeMethod, long arg) {
         Long ts = BTraceUtils.Collections.get(records, arg);
         if (ts == null) {
             return;
         }
         long duration = timeNanos() - ts;
-        Profiling.recordExit(profiler, "request->endRouter", duration);
+        Profiling.recordExit(profiler, "request->3.endRoute", duration);
+    }
+
+
+//    @OnMethod(
+//            clazz = "com.actiontech.dble.btrace.provider.CostTimeProvider",
+//            method = "resFromBack"
+//    )
+//    public static void resFromBack(@ProbeClassName String probeClass, @ProbeMethodName String probeMethod, long arg) {
+//        Long ts = BTraceUtils.Collections.get(records, arg);
+//        if (ts == null) {
+//            return;
+//        }
+//        long duration = timeNanos() - ts;
+//        Profiling.recordExit(profiler, "request->4.resFromBack", duration);
+//    }
+
+    @OnMethod(
+            clazz = "com.actiontech.dble.btrace.provider.CostTimeProvider",
+            method = "startExecuteBackend"
+    )
+    public static void startExecuteBackend(@ProbeClassName String probeClass, @ProbeMethodName String probeMethod, long arg) {
+        Long ts = BTraceUtils.Collections.get(records, arg);
+        if (ts == null) {
+            return;
+        }
+        long duration = timeNanos() - ts;
+        Profiling.recordExit(profiler, "request->5.startExecuteBackend", duration);
     }
 
     @OnMethod(
@@ -84,7 +112,7 @@ public class BTraceCostTime {
         }
         long duration = timeNanos() - ts;
         BTraceUtils.Collections.remove(records, arg);
-        Profiling.recordExit(profiler, "request->response", duration);
+        Profiling.recordExit(profiler, "request->6.response", duration);
     }
 
 

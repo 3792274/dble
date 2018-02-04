@@ -253,7 +253,7 @@
             <groupId>com.sun.tools.btrace</groupId>
             <artifactId>btrace-client</artifactId>
             <version>1.2</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

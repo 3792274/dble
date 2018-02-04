@@ -8,12 +8,22 @@ package com.actiontech.dble.btrace.provider;
 public class CostTimeProvider {
     public void beginRequest(long id) {
     }
-    public void endParseProtocol(long id) {
+
+    public void startProcess(long id) {
     }
+
     public void endParse(long id) {
     }
-    public void endRouter(long id) {
+
+    public void endRoute(long id) {
     }
+
+    public void resFromBack(long id) {
+    }
+
+    public void startExecuteBackend(long id) {
+    }
+
     public void beginResponse(long id) {
     }
 }

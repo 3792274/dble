@@ -46,6 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
@@ -80,6 +81,7 @@ public class NonBlockingSession implements Session {
     private QueryTimeCost queryTimeCost;
     private CostTimeProvider provider;
     private volatile boolean timeCost = false;
+    private AtomicBoolean firstBackConRes = new AtomicBoolean(false);
 
     public NonBlockingSession(ServerConnection source) {
         this.source = source;
@@ -119,12 +121,11 @@ public class NonBlockingSession implements Session {
         }
         queryTimeCost.setRequestTime(requestTime);
     }
-
-    public void endParseProtocol() {
+    public void startProcess() {
         if (!timeCost) {
             return;
         }
-        provider.endParseProtocol(source.getId());
+        provider.startProcess(source.getId());
     }
 
     public void endParse() {
@@ -135,11 +136,11 @@ public class NonBlockingSession implements Session {
     }
 
 
-    public void endRouter() {
+    public void endRoute() {
         if (!timeCost) {
             return;
         }
-        provider.endRouter(source.getId());
+        provider.endRoute(source.getId());
     }
     public void setResponseTime() {
         if (!timeCost) {
@@ -149,7 +150,7 @@ public class NonBlockingSession implements Session {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("setResponseTime:" + responseTime);
         }
-        queryTimeCost.setResponseTime(responseTime);
+        queryTimeCost.getResponseTime().set(responseTime);
         provider.beginResponse(source.getId());
         QueryTimeCostContainer.getInstance().add(queryTimeCost);
     }
@@ -165,6 +166,8 @@ public class NonBlockingSession implements Session {
         }
         backendCost.setRequestTime(requestTime);
         queryTimeCost.getBackEndTimeCosts().put(backendID, backendCost);
+
+
     }
 
     public void setBackendResponseTime(long backendID) {
@@ -172,15 +175,24 @@ public class NonBlockingSession implements Session {
             return;
         }
         QueryTimeCost backCost = queryTimeCost.getBackEndTimeCosts().get(backendID);
-        if (backCost != null && backCost.getResponseTime() == 0) {
-            long responseTime = System.nanoTime();
+        long responseTime = System.nanoTime();
+        if (backCost != null && backCost.getResponseTime().compareAndSet(0, responseTime)) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("backend connection[" + backendID + "] setResponseTime:" + responseTime);
             }
-            backCost.setResponseTime(System.nanoTime());
+            provider.resFromBack(source.getId());
+            firstBackConRes.set(false);
         }
     }
 
+    public void startExecuteBackend() {
+        if (!timeCost) {
+            return;
+        }
+        if (firstBackConRes.compareAndSet(false, true)) {
+            provider.startExecuteBackend(source.getId());
+        }
+    }
     @Override
     public int getTargetCount() {
         return target.size();

@@ -37,10 +37,9 @@ public class ManagerConnection extends FrontendConnection {
     }
 
     @Override
-    public void endParseProtocol() {
+    public void startProcess() {
         //do nothing
     }
-
 
     @Override
     public void handle(final byte[] data) {

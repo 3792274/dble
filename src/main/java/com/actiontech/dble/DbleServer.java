@@ -315,7 +315,7 @@ public final class DbleServer {
         timerExecutor = ExecutorUtil.createFixed("Timer", 1);
 
         for (int i = 0; i < processors.length; i++) {
-            processors[i] = new NIOProcessor("Processor" + i, bufferPool, businessExecutor);
+            processors[i] = new NIOProcessor("Processor" + i, bufferPool);
         }
 
         if (aio) {
