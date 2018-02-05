@@ -315,7 +315,7 @@ public final class DbleServer {
 
         int threadPoolSize = system.getProcessorExecutor();
         businessExecutor = ExecutorUtil.createFixed("BusinessExecutor", threadPoolSize);
-        backendBusinessExecutor = ExecutorUtil.createFixed("backendBusinessExecutor", threadPoolSize);
+        backendBusinessExecutor = ExecutorUtil.createFixed("backendBusinessExecutor", system.getBackendProcessorExecutor());
         complexQueryExecutor = ExecutorUtil.createCached("complexQueryExecutor", threadPoolSize);
         timerExecutor = ExecutorUtil.createFixed("Timer", 1);
 
