@@ -29,10 +29,16 @@ public final class NIOReactor {
     private static final Logger LOGGER = LoggerFactory.getLogger(NIOReactor.class);
     private final String name;
     private final RW reactorR;
+    private final boolean frontFlag;
 
-    public NIOReactor(String name) throws IOException {
+    public NIOReactor(String name, boolean frontFlag) throws IOException {
         this.name = name;
         this.reactorR = new RW();
+        this.frontFlag = frontFlag;
+    }
+
+    private void backendSelectCostTime(long time) {
+
     }
 
     void startup() {
@@ -59,9 +65,14 @@ public final class NIOReactor {
             Set<SelectionKey> keys = null;
             for (; ; ) {
                 try {
+                    long start = 0;
+                    if (!frontFlag) {
+                        start = System.nanoTime();
+                    }
                     finalSelector.select(500L);
                     register(finalSelector);
                     keys = finalSelector.selectedKeys();
+                    boolean first = true;
                     for (SelectionKey key : keys) {
                         AbstractConnection con = null;
                         try {
@@ -69,6 +80,10 @@ public final class NIOReactor {
                             if (att != null) {
                                 con = (AbstractConnection) att;
                                 if (key.isValid() && key.isReadable()) {
+                                    if (!frontFlag && first) {
+                                        first = false;
+                                        backendSelectCostTime(System.nanoTime() - start);
+                                    }
                                     try {
                                         con.asyncRead();
                                     } catch (IOException e) {

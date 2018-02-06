@@ -359,10 +359,10 @@ public final class DbleServer {
 
             NIOReactorPool frontReactorPool = new NIOReactorPool(
                     DirectByteBufferPool.LOCAL_BUF_THREAD_PREX + "NIOREACTOR_FRONT",
-                    frontProcessorCount);
+                    frontProcessorCount, true);
             NIOReactorPool backendReactorPool = new NIOReactorPool(
                     DirectByteBufferPool.LOCAL_BUF_THREAD_PREX + "NIOREACTOR_BACKEND",
-                    backendProcessorCount);
+                    backendProcessorCount, false);
             connector = new NIOConnector(DirectByteBufferPool.LOCAL_BUF_THREAD_PREX + "NIOConnector", backendReactorPool);
             ((NIOConnector) connector).start();
 

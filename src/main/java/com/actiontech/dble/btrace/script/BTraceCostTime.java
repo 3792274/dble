@@ -109,6 +109,14 @@ public class BTraceCostTime {
         Profiling.recordExit(profiler, "request->6.response", duration);
     }
 
+    @OnMethod(
+            clazz = "com.actiontech.dble.net.NIOReactor",
+            method = "backendSelectCostTime"
+    )
+    public static void backendSelectCostTime(@ProbeClassName String probeClass, @ProbeMethodName String probeMethod, long arg) {
+
+        Profiling.recordExit(profiler, "4-3 selector_cost_time", arg);
+    }
 
     @OnTimer(4000)
     public static void print() {
