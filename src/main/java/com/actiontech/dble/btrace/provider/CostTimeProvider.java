@@ -26,4 +26,7 @@ public class CostTimeProvider {
 
     public void beginResponse(long id) {
     }
+
+    public void pushDown(long id) {
+    }
 }

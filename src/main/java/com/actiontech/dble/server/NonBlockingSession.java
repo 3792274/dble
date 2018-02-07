@@ -164,6 +164,7 @@ public class NonBlockingSession implements Session {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("backend connection[" + backendID + "] setRequestTime:" + requestTime);
         }
+        provider.pushDown(source.getId());
         backendCost.setRequestTime(requestTime);
         queryTimeCost.getBackEndTimeCosts().put(backendID, backendCost);
 

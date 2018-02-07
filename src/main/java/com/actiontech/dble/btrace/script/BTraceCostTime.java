@@ -68,6 +68,18 @@ public class BTraceCostTime {
         Profiling.recordExit(profiler, "request->3.endRoute", duration);
     }
 
+    @OnMethod(
+            clazz = "com.actiontech.dble.btrace.provider.CostTimeProvider",
+            method = "pushDown"
+    )
+    public static void pushDown(@ProbeClassName String probeClass, @ProbeMethodName String probeMethod, long arg) {
+        Long ts = BTraceUtils.Collections.get(records, arg);
+        if (ts == null) {
+            return;
+        }
+        long duration = timeNanos() - ts;
+        Profiling.recordExit(profiler, "request->3.1.pushdown", duration);
+    }
 
     @OnMethod(
             clazz = "com.actiontech.dble.btrace.provider.CostTimeProvider",
@@ -109,6 +121,16 @@ public class BTraceCostTime {
         Profiling.recordExit(profiler, "request->6.response", duration);
     }
 
+
+    @OnMethod(clazz="com.actiontech.dble.net.NIOSocketWR", method="asyncRead", location=@Location(value=Kind.RETURN))
+    public static void exitAsyncRead(@ProbeMethodName(fqn=true) String probeMethod, @Duration long duration) {
+        BTraceUtils.Profiling.recordExit(profiler, probeMethod, duration);
+    }
+
+    @OnMethod(clazz="com.actiontech.dble.net.AbstractConnection", method="onReadData", location=@Location(value=Kind.RETURN))
+    public static void exit(@ProbeMethodName(fqn=true) String probeMethod, @Duration long duration) {
+        BTraceUtils.Profiling.recordExit(profiler, probeMethod, duration);
+    }
     @OnMethod(
             clazz = "com.actiontech.dble.net.NIOReactor",
             method = "backendSelectCostTime"
