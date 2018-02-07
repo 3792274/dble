@@ -9,7 +9,7 @@ import java.io.IOException;
 
 
 public abstract class SocketWR {
-    public abstract void asyncRead() throws IOException;
-
+    public abstract void asyncReadFront() throws IOException;
+    public abstract void asyncReadBack() throws IOException;
     public abstract void doNextWriteCheck();
 }

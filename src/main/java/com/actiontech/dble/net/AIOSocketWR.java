@@ -23,9 +23,16 @@ public class AIOSocketWR extends SocketWR {
         channel = (AsynchronousSocketChannel) conn.getChannel();
         this.con = conn;
     }
-
     @Override
-    public void asyncRead() {
+    public void asyncReadBack() {
+        this.asyncRead();
+    }
+    @Override
+    public void asyncReadFront() {
+        this.asyncRead();
+    }
+
+    private void asyncRead() {
         ByteBuffer theBuffer = con.readBuffer;
         if (theBuffer == null) {
             theBuffer = con.processor.getBufferPool().allocate(con.processor.getBufferPool().getChunkSize());

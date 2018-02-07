@@ -159,16 +159,22 @@ public class NIOSocketWR extends SocketWR {
             AbstractConnection.LOGGER.info("clear selector keys err:" + e);
         }
     }
-
     @Override
-    public void asyncRead() throws IOException {
+    public void asyncReadBack() throws IOException {
+        this.asyncRead(false);
+    }
+    @Override
+    public void asyncReadFront() throws IOException {
+        this.asyncRead(true);
+    }
+
+    private void asyncRead(boolean isFront) throws IOException {
         ByteBuffer theBuffer = con.readBuffer;
         if (theBuffer == null) {
             theBuffer = con.processor.getBufferPool().allocate(con.processor.getBufferPool().getChunkSize());
             con.readBuffer = theBuffer;
         }
         int got = channel.read(theBuffer);
-        con.onReadData(got);
+        con.onReadData(got, isFront);
     }
-
 }

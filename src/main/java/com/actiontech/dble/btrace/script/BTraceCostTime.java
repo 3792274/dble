@@ -122,13 +122,13 @@ public class BTraceCostTime {
     }
 
 
-    @OnMethod(clazz="com.actiontech.dble.net.NIOSocketWR", method="asyncRead", location=@Location(value=Kind.RETURN))
-    public static void exitAsyncRead(@ProbeMethodName(fqn=true) String probeMethod, @Duration long duration) {
+    @OnMethod(clazz="com.actiontech.dble.net.NIOSocketWR", method="asyncReadBack", location=@Location(value=Kind.RETURN))
+    public static void asyncReadBack(@ProbeMethodName(fqn=true) String probeMethod, @Duration long duration) {
         BTraceUtils.Profiling.recordExit(profiler, probeMethod, duration);
     }
 
-    @OnMethod(clazz="com.actiontech.dble.net.AbstractConnection", method="onReadData", location=@Location(value=Kind.RETURN))
-    public static void exit(@ProbeMethodName(fqn=true) String probeMethod, @Duration long duration) {
+    @OnMethod(clazz="com.actiontech.dble.net.AbstractConnection", method="onReadDataBackend", location=@Location(value=Kind.RETURN))
+    public static void onReadDataBackend(@ProbeMethodName(fqn=true) String probeMethod, @Duration long duration) {
         BTraceUtils.Profiling.recordExit(profiler, probeMethod, duration);
     }
     @OnMethod(

@@ -85,7 +85,11 @@ public final class NIOReactor {
                                         backendSelectCostTime(System.nanoTime() - start);
                                     }
                                     try {
-                                        con.asyncRead();
+                                        if (frontFlag) {
+                                            con.asyncRead();
+                                        } else {
+                                            con.asyncReadBack();
+                                        }
                                     } catch (IOException e) {
                                         con.close("program err:" + e.toString());
                                         continue;

@@ -254,12 +254,34 @@ public abstract class AbstractConnection implements NIOConnection {
 
     }
 
-    public void asyncRead() throws IOException {
-        this.socketWR.asyncRead();
+    @Override
+    public final void write(ByteBuffer buffer) {
+
+        if (isSupportCompress()) {
+            ByteBuffer newBuffer = CompressUtil.compressMysqlPacket(buffer, this, compressUnfinishedDataQueue);
+            writeQueue.offer(newBuffer);
+        } else {
+            writeQueue.offer(buffer);
+        }
+
+        // if ansyn write finished event got lock before me ,then writing
+        // flag is set false but not start a write request
+        // so we check again
+        try {
+            this.socketWR.doNextWriteCheck();
+        } catch (Exception e) {
+            LOGGER.info("write err:", e);
+            this.close("write err:" + e);
+        }
     }
 
-    public void doNextWriteCheck() throws IOException {
-        this.socketWR.doNextWriteCheck();
+
+
+    public void write(byte[] data) {
+        ByteBuffer buffer = allocate();
+        buffer = writeToBuffer(data, buffer);
+        write(buffer);
+
     }
 
     public void onReadData(int got) throws IOException {
@@ -326,6 +348,34 @@ public abstract class AbstractConnection implements NIOConnection {
         }
     }
 
+    public void onReadData(int got, boolean isFront) throws IOException {
+        if (isFront) {
+            this.onReadDataFront(got);
+        } else {
+            this.onReadDataBackend(got);
+        }
+    }
+
+    public void asyncReadBack() throws IOException {
+        this.socketWR.asyncReadBack();
+    }
+
+    public void asyncRead() throws IOException {
+        this.socketWR.asyncReadFront();
+    }
+
+    public void doNextWriteCheck() throws IOException {
+        this.socketWR.doNextWriteCheck();
+    }
+
+    private void onReadDataFront(int got) throws IOException {
+        this.onReadData(got);
+    }
+
+    private void onReadDataBackend(int got) throws IOException {
+        this.onReadData(got);
+    }
+
     private void readReachEnd() {
         // if cur buffer is temper none direct byte buffer and not
         // received large message in recent 30 seconds
@@ -385,33 +435,6 @@ public abstract class AbstractConnection implements NIOConnection {
         return buffer;
     }
 
-    public void write(byte[] data) {
-        ByteBuffer buffer = allocate();
-        buffer = writeToBuffer(data, buffer);
-        write(buffer);
-
-    }
-
-    @Override
-    public final void write(ByteBuffer buffer) {
-
-        if (isSupportCompress()) {
-            ByteBuffer newBuffer = CompressUtil.compressMysqlPacket(buffer, this, compressUnfinishedDataQueue);
-            writeQueue.offer(newBuffer);
-        } else {
-            writeQueue.offer(buffer);
-        }
-
-        // if ansyn write finished event got lock before me ,then writing
-        // flag is set false but not start a write request
-        // so we check again
-        try {
-            this.socketWR.doNextWriteCheck();
-        } catch (Exception e) {
-            LOGGER.info("write err:", e);
-            this.close("write err:" + e);
-        }
-    }
 
     public ByteBuffer checkWriteBuffer(ByteBuffer buffer, int capacity, boolean writeSocketIfFull) {
         if (capacity > buffer.remaining()) {
