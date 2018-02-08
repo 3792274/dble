@@ -9,7 +9,7 @@ import com.actiontech.dble.DbleServer;
 import com.actiontech.dble.backend.mysql.ByteUtil;
 import com.actiontech.dble.backend.mysql.nio.handler.LoadDataResponseHandler;
 import com.actiontech.dble.backend.mysql.nio.handler.ResponseHandler;
-import com.actiontech.dble.net.handler.BackendAsyncHandler;
+import com.actiontech.dble.net.NIOHandler;
 import com.actiontech.dble.net.mysql.EOFPacket;
 import com.actiontech.dble.net.mysql.ErrorPacket;
 import com.actiontech.dble.net.mysql.OkPacket;
@@ -20,13 +20,16 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * life cycle: from connection establish to close <br/>
  *
  * @author mycat
  */
-public class MySQLConnectionHandler extends BackendAsyncHandler {
+public class MySQLConnectionHandler implements NIOHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(MySQLConnectionHandler.class);
     private static final int RESULT_STATUS_INIT = 0;
     private static final int RESULT_STATUS_HEADER = 1;
@@ -42,7 +45,12 @@ public class MySQLConnectionHandler extends BackendAsyncHandler {
      */
     private volatile ResponseHandler responseHandler;
 
+    private final ConcurrentLinkedQueue<byte[]> dataQueue = new ConcurrentLinkedQueue<>();
+    private final AtomicBoolean isHandling = new AtomicBoolean(false);
     private volatile NonBlockingSession session;
+    public void setSession(NonBlockingSession session) {
+        this.session = session;
+    }
 
     public MySQLConnectionHandler(MySQLConnection source) {
         this.source = source;
@@ -55,8 +63,42 @@ public class MySQLConnectionHandler extends BackendAsyncHandler {
         }
 
     }
+    protected void offerData(byte[] data, Executor executor) {
+        if (dataQueue.offer(data)) {
+            if (session != null) {
+                session.setPushQueue();
+            }
+            handleQueue(executor);
+            if (session != null) {
+                session.setProcessFinished();
+            }
+        } else {
+            offerDataError();
+        }
+    }
 
-    @Override
+    protected void handleQueue(final Executor executor) {
+        if (isHandling.compareAndSet(false, true)) {
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        byte[] data = null;
+                        while ((data = dataQueue.poll()) != null) {
+                            handleData(data);
+                        }
+                    } catch (Exception e) {
+                        handleDataError(e);
+                    } finally {
+                        isHandling.set(false);
+                        if (dataQueue.size() > 0) {
+                            handleQueue(executor);
+                        }
+                    }
+                }
+            });
+        }
+    }
     public void handle(byte[] data) {
         if (session != null) {
             session.setBackendResponseTime(source.getId());
@@ -68,13 +110,11 @@ public class MySQLConnectionHandler extends BackendAsyncHandler {
         }
     }
 
-    @Override
     protected void offerDataError() {
         resultStatus = RESULT_STATUS_INIT;
         throw new RuntimeException("offer data error!");
     }
 
-    @Override
     protected void handleData(byte[] data) {
         switch (resultStatus) {
             case RESULT_STATUS_INIT:
@@ -136,10 +176,6 @@ public class MySQLConnectionHandler extends BackendAsyncHandler {
         // throw new RuntimeException("reset agani!");
         // }
         this.responseHandler = responseHandler;
-    }
-
-    public void setSession(NonBlockingSession session) {
-        this.session = session;
     }
 
     /**
@@ -220,7 +256,6 @@ public class MySQLConnectionHandler extends BackendAsyncHandler {
         }
     }
 
-    @Override
     protected void handleDataError(Exception e) {
         LOGGER.info(this.source.toString() + " handle data error:", e);
         dataQueue.clear();
