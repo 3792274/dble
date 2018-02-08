@@ -236,7 +236,7 @@ public abstract class AbstractConnection implements NIOConnection {
     }
 
     @Override
-    public void handle(byte[] data) {
+    public boolean handle(byte[] data) {
         if (isSupportCompress()) {
             List<byte[]> packs = CompressUtil.decompressMysqlPacket(data, decompressUnfinishedDataQueue);
             for (byte[] pack : packs) {
@@ -244,8 +244,9 @@ public abstract class AbstractConnection implements NIOConnection {
                     handler.handle(pack);
                 }
             }
+            return true;
         } else {
-            handler.handle(data);
+            return handler.handle(data);
         }
     }
 
@@ -318,7 +319,7 @@ public abstract class AbstractConnection implements NIOConnection {
                 readBuffer.position(offset);
                 byte[] data = new byte[length];
                 readBuffer.get(data, 0, length);
-                handle(data);
+                boolean res = handle(data);
                 // maybe handle stmt_close
                 if (isClosed()) {
                     return;
@@ -373,7 +374,71 @@ public abstract class AbstractConnection implements NIOConnection {
     }
 
     private void onReadDataBackend(int got) throws IOException {
-        this.onReadData(got);
+        if (isClosed.get()) {
+            return;
+        }
+
+        lastReadTime = TimeUtil.currentTimeMillis();
+        if (got < 0) {
+            this.close("stream closed");
+            return;
+        } else if (got == 0 && !this.channel.isOpen()) {
+            this.close("socket closed");
+            return;
+        }
+        netInBytes += got;
+        processor.addNetInBytes(got);
+
+        // execute data in loop
+        int offset = readBufferOffset, length = 0, position = readBuffer.position();
+        for (; ; ) {
+            length = getPacketLength(readBuffer, offset);
+            if (length == -1) {
+                if (offset != 0) {
+                    this.readBuffer = compactReadBuffer(readBuffer, offset);
+                } else if (readBuffer != null && !readBuffer.hasRemaining()) {
+                    throw new RuntimeException("invalid readbuffer capacity ,too little buffer size " +
+                            readBuffer.capacity());
+                }
+                break;
+            }
+            if (position >= offset + length && readBuffer != null) {
+                // handle this package
+                readBuffer.position(offset);
+                byte[] data = new byte[length];
+                readBuffer.get(data, 0, length);
+                boolean res = handle(data);
+                if (!res) {
+                    readReachEnd();
+                    break;
+                }
+                // maybe handle stmt_close
+                if (isClosed()) {
+                    return;
+                }
+                // offset to next position
+                offset += length;
+                // reached end
+                if (position == offset) {
+                    readReachEnd();
+                    break;
+                } else {
+                    // try next package parse
+                    readBufferOffset = offset;
+                    if (readBuffer != null) {
+                        readBuffer.position(position);
+                    }
+                    continue;
+                }
+            } else {
+                // not read whole message package ,so check if buffer enough and
+                // compact readbuffer
+                if (!readBuffer.hasRemaining()) {
+                    readBuffer = ensureFreeSpaceOfReadBuffer(readBuffer, offset, length);
+                }
+                break;
+            }
+        }
     }
 
     private void readReachEnd() {

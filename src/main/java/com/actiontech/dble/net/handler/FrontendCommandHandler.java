@@ -38,20 +38,21 @@ public class FrontendCommandHandler implements NIOHandler {
     }
 
     @Override
-    public void handle(byte[] data) {
+    public boolean handle(byte[] data) {
         if (source.getLoadDataInfileHandler() != null && source.getLoadDataInfileHandler().isStartLoadData()) {
             MySQLMessage mm = new MySQLMessage(data);
             int packetLength = mm.readUB3();
             if (packetLength + 4 == data.length) {
                 source.loadDataInfileData(data);
             }
-            return;
+            return true;
         }
         if (dataQueue.offer(data)) {
             handleQueue();
         } else {
             throw new RuntimeException("add data to queue error.");
         }
+        return true;
     }
 
     protected void handleData(byte[] data) {

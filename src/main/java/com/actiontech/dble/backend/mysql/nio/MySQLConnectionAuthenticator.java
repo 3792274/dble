@@ -39,7 +39,7 @@ public class MySQLConnectionAuthenticator implements NIOHandler {
     }
 
     @Override
-    public void handle(byte[] data) {
+    public boolean handle(byte[] data) {
         try {
             switch (data[4]) {
                 case OkPacket.FIELD_COUNT:
@@ -85,11 +85,11 @@ public class MySQLConnectionAuthenticator implements NIOHandler {
                     }
 
             }
-
+            return true;
         } catch (RuntimeException e) {
             if (listener != null) {
                 listener.connectionError(e, source);
-                return;
+                return true;
             }
             throw e;
         }

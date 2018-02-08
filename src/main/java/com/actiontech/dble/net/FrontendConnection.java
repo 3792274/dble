@@ -439,7 +439,7 @@ public abstract class FrontendConnection extends AbstractConnection {
     }
 
     @Override
-    public void handle(final byte[] data) {
+    public boolean handle(final byte[] data) {
         setRequestTime();
         if (isSupportCompress()) {
             List<byte[]> packs = CompressUtil.decompressMysqlPacket(data, decompressUnfinishedDataQueue);
@@ -452,6 +452,7 @@ public abstract class FrontendConnection extends AbstractConnection {
         } else {
             rawHandle(data);
         }
+        return true;
     }
 
     public void rawHandle(final byte[] data) {

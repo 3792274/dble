@@ -37,11 +37,11 @@ public class FrontendAuthenticator implements NIOHandler {
     }
 
     @Override
-    public void handle(byte[] data) {
+    public boolean handle(byte[] data) {
         // check quit packet
         if (data.length == QuitPacket.QUIT.length && data[4] == MySQLPacket.COM_QUIT) {
             source.close("quit packet");
-            return;
+            return true;
         } else if (data.length == PingPacket.PING.length && data[4] == PingPacket.COM_PING) {
             if (DbleServer.getInstance().isOnline()) {
                 source.write(AUTH_OK);
@@ -53,7 +53,7 @@ public class FrontendAuthenticator implements NIOHandler {
                 errPacket.setPacketId(2);
                 source.write(errPacket.toBytes());
             }
-            return;
+            return true;
         }
 
         AuthPacket auth = new AuthPacket();
@@ -62,31 +62,31 @@ public class FrontendAuthenticator implements NIOHandler {
         //check mysql_native_password
         if (auth.getAuthPlugin() != null && !"mysql_native_password".equals(auth.getAuthPlugin())) {
             failure(ErrorCode.ER_ACCESS_DENIED_ERROR, "only mysql_native_password auth check is supported");
-            return;
+            return true;
         }
 
         // check user
         if (!checkUser(auth.getUser(), source.getHost())) {
             failure(ErrorCode.ER_ACCESS_DENIED_ERROR, "Access denied for user '" + auth.getUser() + "' with host '" + source.getHost() + "'");
-            return;
+            return true;
         }
 
         // check password
         if (!checkPassword(auth.getPassword(), auth.getUser())) {
             failure(ErrorCode.ER_ACCESS_DENIED_ERROR, "Access denied for user '" + auth.getUser() + "', because password is error ");
-            return;
+            return true;
         }
 
         // check degrade
         if (isDegrade(auth.getUser())) {
             failure(ErrorCode.ER_ACCESS_DENIED_ERROR, "Access denied for user '" + auth.getUser() + "', because service be degraded ");
-            return;
+            return true;
         }
 
         // check dataHost without writeHost flag
         if (DbleServer.getInstance().getConfig().isDataHostWithoutWR() && !(this instanceof ManagerAuthenticator)) {
             failure(ErrorCode.ER_ACCESS_DENIED_ERROR, "Access denied for user '" + auth.getUser() + "', because there have dataHost without writeHost ");
-            return;
+            return true;
         }
 
 
@@ -102,6 +102,7 @@ public class FrontendAuthenticator implements NIOHandler {
             default:
                 success(auth);
         }
+        return true;
     }
 
     //frontend connection reached the user threshold. service degrade

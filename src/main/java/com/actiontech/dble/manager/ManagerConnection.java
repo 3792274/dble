@@ -42,8 +42,8 @@ public class ManagerConnection extends FrontendConnection {
     }
 
     @Override
-    public void handle(final byte[] data) {
-        handler.handle(data);
+    public boolean handle(final byte[] data) {
+        return handler.handle(data);
     }
 
     @Override

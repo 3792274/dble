@@ -10,6 +10,6 @@ package com.actiontech.dble.net;
  */
 public interface NIOHandler {
 
-    void handle(byte[] data);
+    boolean handle(byte[] data);
 
 }
