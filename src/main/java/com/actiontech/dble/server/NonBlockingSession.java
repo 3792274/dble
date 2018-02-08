@@ -170,6 +170,7 @@ public class NonBlockingSession implements Session {
 
 
     }
+
     public void setBackendResponseTime(long backendID) {
         if (!timeCost) {
             return;
@@ -185,18 +186,6 @@ public class NonBlockingSession implements Session {
         }
     }
 
-    public void setPushQueue() {
-        if (!timeCost) {
-            return;
-        }
-        provider.setPushQueue(source.getId());
-    }
-    public void setProcessFinished() {
-        if (!timeCost) {
-            return;
-        }
-        provider.setProcessFinished(source.getId());
-    }
     public void startExecuteBackend() {
         if (!timeCost) {
             return;

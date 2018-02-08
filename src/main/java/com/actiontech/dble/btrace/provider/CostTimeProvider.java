@@ -21,11 +21,6 @@ public class CostTimeProvider {
     public void resFromBack(long id) {
     }
 
-    public void setPushQueue(long id) {
-    }
-
-    public void setProcessFinished(long id) {
-    }
     public void startExecuteBackend(long id) {
     }
 
