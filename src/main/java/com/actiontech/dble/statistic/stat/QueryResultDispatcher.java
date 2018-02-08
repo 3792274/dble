@@ -48,7 +48,7 @@ public final class QueryResultDispatcher {
     }
 
     public static void dispatchQuery(final QueryResult queryResult) {
-        DbleServer.getInstance().getBusinessExecutor().execute(new Runnable() {
+        DbleServer.getInstance().getBackendBusinessExecutor().execute(new Runnable() {
 
             public void run() {
 
