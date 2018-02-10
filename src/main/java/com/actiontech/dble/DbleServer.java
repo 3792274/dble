@@ -107,6 +107,7 @@ public final class DbleServer {
     private final long startupTime;
     private NIOProcessor[] processors;
     private SocketConnector connector;
+    private ExecutorService businessExecutor;
     private ExecutorService backendBusinessExecutor;
     private ExecutorService complexQueryExecutor;
     private ExecutorService timerExecutor;
@@ -315,6 +316,7 @@ public final class DbleServer {
         bufferPool = new DirectByteBufferPool(bufferPoolPageSize, bufferPoolChunkSize, bufferPoolPageNumber);
 
         int threadPoolSize = system.getProcessorExecutor();
+        businessExecutor = ExecutorUtil.createFixed("BusinessExecutor", threadPoolSize);
         backendBusinessExecutor = ExecutorUtil.createFixed("backendBusinessExecutor", system.getBackendProcessorExecutor());
         complexQueryExecutor = ExecutorUtil.createCached("complexQueryExecutor", threadPoolSize);
         timerExecutor = ExecutorUtil.createFixed("Timer", 1);
@@ -649,6 +651,10 @@ public final class DbleServer {
 
     public CacheService getCacheService() {
         return cacheService;
+    }
+
+    public ExecutorService getBusinessExecutor() {
+        return businessExecutor;
     }
 
     public ExecutorService getBackendBusinessExecutor() {
