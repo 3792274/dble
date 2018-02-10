@@ -218,24 +218,26 @@ public class ProxyMetaManager {
         }
     }
 
-
     public QueryNode getSyncView(String schema, String vName) {
-        while (true) {
-            metaLock.lock();
-            try {
-                if (lockTables.contains(genLockKey(schema, vName))) {
-                    LOGGER.info("schema:" + schema + ", view:" + vName + " is doing ddl,Waiting for table metadata lock");
-                    condRelease.await();
-                } else {
-                    return catalogs.get(schema).getView(vName);
-                }
-            } catch (InterruptedException e) {
-                return null;
-            } finally {
-                metaLock.unlock();
-            }
-        }
+        return null;
     }
+    //    public QueryNode getSyncView(String schema, String vName) {
+    //        while (true) {
+    //            metaLock.lock();
+    //            try {
+    //                if (lockTables.contains(genLockKey(schema, vName))) {
+    //                    LOGGER.info("schema:" + schema + ", view:" + vName + " is doing ddl,Waiting for table metadata lock");
+    //                    condRelease.await();
+    //                } else {
+    //                    return catalogs.get(schema).getView(vName);
+    //                }
+    //            } catch (InterruptedException e) {
+    //                return null;
+    //            } finally {
+    //                metaLock.unlock();
+    //            }
+    //        }
+    //    }
 
     private StructureMeta.TableMeta getTableMeta(String schema, String tbName) {
         return catalogs.get(schema).getTableMeta(tbName);
