@@ -118,6 +118,12 @@ public class FrontendCommandHandler implements NIOHandler {
                         while ((data = dataQueue.poll()) != null) {
                             handleData(data);
                         }
+                        for (int i = 0; i < DbleServer.getInstance().getConfig().getSystem().getIdleCount(); i++) {
+                            while ((data = dataQueue.poll()) != null) {
+                                handleData(data);
+                            }
+                        }
+
                     } catch (Exception e) {
                         String msg = e.getMessage();
                         if (StringUtil.isEmpty(msg)) {

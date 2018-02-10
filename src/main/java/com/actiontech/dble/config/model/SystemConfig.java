@@ -137,6 +137,15 @@ public final class SystemConfig {
     private int maxCostStatSize = 100;
     private int costSamplePercent = 1;
 
+    public int getIdleCount() {
+        return idleCount;
+    }
+
+    public void setIdleCount(int idleCount) {
+        this.idleCount = idleCount;
+    }
+
+    private int idleCount = 200000;
 
     public SystemConfig() {
         this.serverPort = DEFAULT_PORT;
